@@ -1,0 +1,414 @@
+openapi: 3.0.0
+info:
+  title: Vocabularius - Web App for Foreign Language Vocabulary Learning
+  version: 1.0.0
+  description: A web application designed to help users learn foreign language vocabulary through spaced repetition and personalized learning.
+  termsOfService: https://example.com/terms
+  contact:
+    name: API Support
+    url: https://example.com/support
+    email: support@example.com
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+  - url: https://vocabularius.example.com/api
+    description: Production server
+tags:
+  - name: Authentication
+    description: Operations related to user authentication and authorization.
+  - name: Dictionary Management
+    description: Operations for managing the user's vocabulary dictionary.
+  - name: Learning Sessions
+    description: Operations related to learning and word review.
+  - name: User Management
+    description: Operations for managing user accounts.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Error message.
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: User ID.
+        username:
+          type: string
+          description: Username of the user.
+        email:
+          type: string
+          format: email
+          description: Email address of the user.
+    NewUser:
+        type: object
+        properties:
+            username:
+                type: string
+                description: Username of the new user.
+                example: 'newuser123'
+            email:
+                type: string
+                format: email
+                description: Email of the new user
+                example: 'newuser@example.com'
+            password:
+                type: string
+                description: Password of the new user. Must be at least 8 characters long.
+                example: 'P@$$wOrd123'
+    Credentials:
+        type: object
+        properties:
+            username:
+                type: string
+                description: Username of the user.
+                example: 'user123'
+            password:
+                type: string
+                description: Password of the user.
+                example: 'P@$$wOrd123'
+    Word:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique ID of the word.
+        foreignWord:
+          type: string
+          description: Word in the foreign language.
+        nativeWord:
+          type: string
+          description: Word in the user's native language.
+        description:
+          type: string
+          description: Additional description of the word.
+    WordInput:
+      type: object
+      properties:
+        foreignWord:
+          type: string
+          description: Word in the foreign language.
+          example: "hello"
+        nativeWord:
+          type: string
+          description: Word in the user's native language.
+          example: "привет"
+        description:
+          type: string
+          description: Additional description of the word.
+          example: "A common greeting."
+    WordReview:
+      type: object
+      properties:
+        wordId:
+          type: integer
+          format: int64
+          description: ID of the reviewed word.
+        rating:
+          type: string
+          enum:
+            - "dont_know"
+            - "almost_remembered"
+            - "remember"
+            - "mastered"
+          description: User's rating of the word's knowledge.
+    ImportResult:
+      type: object
+      properties:
+        processed:
+          type: integer
+          description: Number of processed rows from file
+        imported:
+            type: integer
+            description: Number of imported words
+        errors:
+            type: integer
+            description: Number of errors
+paths:
+  /auth/register:
+    post:
+        tags:
+            - Authentication
+        summary: Register new user
+        requestBody:
+            required: true
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/NewUser'
+        responses:
+            '201':
+                description: User successfully created
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/User'
+            '400':
+                description: Invalid user data or user already exists
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Logs in a user and returns a JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/Credentials'
+      responses:
+        '200':
+          description: Successful login. Returns a JWT.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token for authentication.
+        '401':
+            description: Invalid credentials
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'
+
+  /words/import:
+    post:
+      tags:
+        - Dictionary Management
+      summary: Imports words from a CSV file.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file to upload.
+      responses:
+        '200':
+          description: Words imported successfully.
+          content:
+              application/json:
+                schema:
+                    $ref: '#/components/schemas/ImportResult'
+        '400':
+          description: Invalid file format or import error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /words:
+    get:
+      tags:
+        - Dictionary Management
+      summary: Retrieves all words in the user's dictionary.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval of words.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Word'
+    post:
+      tags:
+        - Dictionary Management
+      summary: Adds a new word to the user's dictionary.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WordInput'
+      responses:
+        '201':
+          description: Word created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Word'
+        '400':
+          description: Invalid word data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /words/{wordId}:
+    get:
+      tags:
+        - Dictionary Management
+      summary: Retrieves a specific word by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordId
+          in: path
+          required: true
+          description: ID of the word to retrieve.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful retrieval of the word.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Word'
+        '404':
+          description: Word not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Dictionary Management
+      summary: Updates an existing word by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordId
+          in: path
+          required: true
+          description: ID of the word to update.
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WordInput'
+      responses:
+        '200':
+          description: Word updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Word'
+        '400':
+          description: Invalid word data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Word not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Dictionary Management
+      summary: Deletes a word by ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: wordId
+          in: path
+          required: true
+          description: ID of the word to delete.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Word deleted successfully.
+        '404':
+          description: Word not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /learning/next:
+    get:
+      tags:
+        - Learning Sessions
+      summary: Retrieves the next word for review based on the smart algorithm.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Next word to review.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Word'
+        '204':
+          description: No words available for review.
+  /learning/review:
+    post:
+      tags:
+        - Learning Sessions
+      summary: Records the user's review of a word.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WordReview'
+      responses:
+        '200':
+          description: Review recorded successfully.
+        '400':
+          description: Invalid review data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/me:
+      get:
+        tags:
+            - User Management
+        summary: Get the currently logged user information
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: User information
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/User'
+          '401':
+            description: Unauthorized, missing or invalid token
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Error'

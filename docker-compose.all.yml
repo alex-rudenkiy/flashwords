@@ -1,0 +1,57 @@
+version: "3.8"
+services:
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./test.db:/app/test.db
+      - ./review_history.json:/app/review_history.json
+      - ./vocab.csv:/app/vocab.csv
+      - ./test.yaml:/app/test.yaml
+      - ./user_data:/app/user_data
+#    depends_on:
+#       - opensearch
+    environment:
+      - OPENSEARCH_HOST=opensearch
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+#  opensearch:
+#    image: opensearchproject/opensearch:2.12.0
+#    ports:
+#      - "9200:9200"
+#      - "9600:9600"
+#    environment:
+#      - "discovery.type=single-node"
+#      - "DISABLE_SECURITY_PLUGIN=true" #  уберите в продакшене
+#    volumes:
+#       - ./metrics/elasticsearch-data:/usr/share/opensearch/data
+#    networks:
+#      opensearch-net:
+#         aliases:
+#           - opensearch
+#
+#  opensearch-dashboards:
+#    image: opensearchproject/opensearch-dashboards:2.12.0
+#    ports:
+#      - "5601:5601"
+#    environment:
+#      - "OPENSEARCH_HOSTS=http://opensearch:9200"
+#    depends_on:
+#        - opensearch
+#    networks:
+#       - opensearch-net
+
+networks:
+    opensearch-net:
+      driver: bridge

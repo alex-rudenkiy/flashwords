@@ -40,7 +40,6 @@ export default function Review() {
   );
 
   const [isHiddenWord, setIsHiddenWord] = useState(true);
-  const [widgetType, setWidgetType] = useState<number>(0);
 
   const handleReview = (rating: Rating) => {
     if (data) {
@@ -52,8 +51,6 @@ export default function Review() {
       setIsHiddenWord(true);
     }
   };
-
-  useEffect(()=> setWidgetType((prev) => (prev + 1) % 2), [data])
 
   useKeyPressEvent("/", () => handleReview("mastered"));
   useKeyPressEvent(".", () => handleReview("learned"));
@@ -73,7 +70,6 @@ export default function Review() {
     >
       {!(isLoading|isInitialLoading||isRefetching) && data ? (
         <WordWidget
-          widgetType={widgetType}
           data={data}
           isHiddenWord={isHiddenWord}
           setIsHiddenWord={setIsHiddenWord}

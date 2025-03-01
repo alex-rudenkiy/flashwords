@@ -5,6 +5,7 @@ import "chart.js/auto";
 import {Chart as ChartJS, LinearScale, PointElement, Tooltip, Legend, TimeScale} from "chart.js";
 import 'chartjs-adapter-moment';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import { getToken } from "../Setting";
 
 ChartJS.register(LinearScale, PointElement, Tooltip, Legend, TimeScale, zoomPlugin);
 
@@ -13,7 +14,7 @@ const WordProgressChart = ({userId}: any) => {
     const [chartData, setChartData] = useState(null);
 
     useEffect(() => {
-        fetch(`/api/stats/progress/${userId}`)
+        fetch(`/api/stats/progress/${userId}`, {headers: {Authorization: `Bearer ${getToken()}`}})
             .then((res) => res.json())
             .then((data) => {
                 const datasets = Object.keys(data).map((word, index) => ({

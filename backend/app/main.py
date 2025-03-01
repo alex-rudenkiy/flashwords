@@ -1,5 +1,9 @@
+import random
 import statistics
 from collections import defaultdict
+import os
+from llm import get_sentence
+from questions import randomQuestionFactory, simpleQuestionFactory
 
 import casdoor
 import numpy as np
@@ -18,12 +22,13 @@ from jose import JWTError, jwt
 from casdoor import CasdoorSDK
 import jwt
 import json
+import requests
 
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM
-import bitsandbytes
+# import torch
+# from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaForCausalLM
+# import bitsandbytes
 
-from llama_cpp import Llama
+# from llama_cpp import Llama
 
 # llm = Llama.from_pretrained(
 # 	repo_id="bartowski/Llama-3.1-8B-Lexi-Uncensored-V2-GGUF",
@@ -33,7 +38,7 @@ from llama_cpp import Llama
 #
 #
 #
-# input_text = 'Make up a sentence with the missing word combination “sun” and write a triplet in its place. Return the answer in json format, example {“sentence”: “She said ... Bob"}'
+
 # # r = llm.create_chat_completion(
 # # 	messages = [
 # # 		{
@@ -51,97 +56,98 @@ from llama_cpp import Llama
 # ) # Generate a completion, can also call create_completion
 # print(output)
 
+get_sentence("hello")
 
 
-public_key = """-----BEGIN CERTIFICATE-----
+public_key = os.environ.get('Casdoor_Certificate', """-----BEGIN CERTIFICATE-----
 MIIE3TCCAsWgAwIBAgIDAeJAMA0GCSqGSIb3DQEBCwUAMCgxDjAMBgNVBAoTBWFk
-bWluMRYwFAYDVQQDEw1jZXJ0LWJ1aWx0LWluMB4XDTI1MDEwODE0MzAzMloXDTQ1
-MDEwODE0MzAzMlowKDEOMAwGA1UEChMFYWRtaW4xFjAUBgNVBAMTDWNlcnQtYnVp
-bHQtaW4wggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDEdHDFbn2yE+Pb
-qbzY2PRfYuhgo0cqpCArtEPCbyyz6sD3b9+6R2D/4iZSnGlGgEdZS5mEPZGlmOLo
-A7dRrw4fT9tx02zCPON4ubsllwU/BhWZqy7q+Q1dV8RrrA4xSgb2g1F9R2R8i784
-ll11p24VwUX4zAnhk+5QAe8Wcu6K6VbF+DmndoNMBB7CklcF+jJ+GBxXKrSyo3s3
-9UCLGEP5bBuDwsKCknvMwFmC23cDpYt+YQnxzxgGsws64WNlEBx8UxWNTxkBu6jW
-/5IlvV+19BmowsAzvybGGqaD5leBzqEESW9pLvuRREuch90GDCk9pJdTsxilurwF
-fJLWV1KNjURZTxAHVLek2FMzn/A9NL20X7acnLpju5eqSDlwSX097auLZqRP+i3s
-7S63z8/k1FNPlze3MNdgDb+0zQaX7XpjvUO2hhedUfZkFyQzUSxYxNKBaq6RTOhv
-6sGs0fUQMYNCjfIrehWtl6djZ8sskl86fXOGZ/m4HekXxwSm5tFMT/DTueWTO6x2
-pTjfd24D4asOUTjy8dR0k4SxcN1FuTAXUeRwDH+MmvQcomI7v7tmng1Sl+Wfn01l
-iVP0VNZscOI/JNNth9gKSfystyRjbL0G9QJ8GsOLBburlOnzOG/2nOoTR7SCoHaT
-e3+bgSSemxNC/lSgGY4ZHpSCXZugUQIDAQABoxAwDjAMBgNVHRMBAf8EAjAAMA0G
-CSqGSIb3DQEBCwUAA4ICAQCCOoUWJHWXnfuWvkhy5LWTDa8nS3mHeKsuoY7cNahc
-utcsS8r2QUexeKQ/ddudR8634HPznoXe+sLTRSgYd5fSIuvl73ekmhcmOda7r7bH
-E+YjJsBSz6hGIf5+h6SWClIgY+U+SZlEMd+xeS31UJLf5ju1MGYHBQ5N306JNvNL
-OEvjFxVI+1s5gyhDbkW3eRYCSSq3XjdrAre0pAAXs409a9KOacgkfzU0cjAkMV2I
-kc/HEzlj416usYC++jVKX1yDbREngzJnGTnaPTCQodlhsjaVUduDIzGORto+jGqQ
-EzisDgQEr+taRkRBBbs5Etg7BWqNaftmEB89ShuFTW2s7o4dkZhHs8ejjDmt+G0T
-QSA5rzPILe0A6YdIxQSFjZyMLbiTL9nTRJl9qigokP07BSFDjzAjrZ8cjUs8tQrd
-9XyhGcezjR6OgCQEIH5YmeyC4UA123egevWcicjBRH4i6fMgEbS8biZuPReP8wr4
-nJb0WqOpCaPn9UuIxFMSDfiRAk5+190R0eAuTPnKAxKUMsqq5T5pNKdQhY7uTSCB
-PH+iIrlG+Im1jNcCd6maG9IGH3R5mjd65DwtZp1MUaTDg97bNIk/4KhGxYLJu7pi
-AzasmLZOrT7KrNqEBPQoznBazpINgRGVVZG5T2juXLA0z6NiCSEC8bkKla81kBgK
-eQ==
------END CERTIFICATE-----"""
+bWluMRYwFAYDVQQDEw1jZXJ0LWJ1aWx0LWluMB4XDTI1MDExMzE0MDM1OVoXDTQ1
+MDExMzE0MDM1OVowKDEOMAwGA1UEChMFYWRtaW4xFjAUBgNVBAMTDWNlcnQtYnVp
+bHQtaW4wggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCWaux5rvaSxumz
+ghlWFydTVcFkMzkrcCybJGDlBOOKgbscsMxH+dRahH5TZCih2UY/kANWNIlBpvOe
+UlRx9OjKIKFDDyvkGLeb7H8UzDgDGy+xpSC5tM+4UL9bka1cJEuc4OWOMFvm/Fd5
+XV366aVGEMuvPHTokKyQfMgYVpnmnQRFQWMFV1EIsb3PgzeaLRfJwPg9Nb7KDh0i
+uZyAsAYRdVFm3fKI5Z+Bwe8kaFPy92GnJTuV4MBNr484GpD96JbDTLvahr8764zl
+wT4BZagdMja9dHVNgW9M4566YISDytjuPSOaFHJmdDaImXUOUna924EsVzvmoil7
+9B6IRwJBhghBIQZps2BgoKilsY2jYYvuzQzig4GV52YyzMvIbIPFhT4Dq3pzOe86
++RjZw7G2KnsB/nY90j57JOUFthIaZQb8Wj2R8z1IO3FNY3wnCFhvgDuWQOnIptXi
+6bZg7SRPCq/AqSTrHwe+hzH4JKLIQ0qBh1c34+3Fgej4M1n51UtzHHMSVnETDzac
+GCXx0ARivNyk8ZXUY07JLmDIhIPl0dzVYZgMLTMt12OEYJKx1irkz2oAlF3jVZei
+fvkN5a+CUxABtedToRd8x5rnIUYXCOBZuR/UxRyVO4P0tqm1PoFIuoeBttZcU56P
+DSGNaIqqUVwnjDDNoV+lCDiAJai/8QIDAQABoxAwDjAMBgNVHRMBAf8EAjAAMA0G
+CSqGSIb3DQEBCwUAA4ICAQCUmJN/zwy2TPll+uw0yNv1x6t5RMNxJBPdvuqjY6ue
+vXorcuIrayYQiaABsJLfeoQutuPBmCBYCKenLe1sKEFCTvUlhtihxAXBA/ABgi83
+4HB+y/DeRcOAVNGMtjTTZkCt3JowM2o3DRt+H5ZAtHE1hWAjm9rAp4B+p0Q9auy0
+olCThpgmU2vWBK8bWkqrpTOyWs4057J7usjZ97d/G3vJ8Wlk+XQ2MF/JUyqgIoNT
+WQ4wGudoDMR4ggZIV/e6cIr2gZDQtFsOeKzw3hfUBymAL00m/cVgtu6C9sJxxcRj
+cpLcC09I7Eh0ZTmILeMX5DxP+Y5csCfmD2zuny5CFdTy6EFcOm9MALh4JrmDX9Kc
+Sz86SSxgcl/KbkJglyHE5c5kgu2QgxXkUemkt8TekbXS85GpRB/ReNjrztiYy+ST
+q+flBebXWChFcqSWU2IyLCV+foT3XQvkYIGAjkU4XJuXS4KFVge5qh5s+c/ayxwU
+wLeYRlg9DLQrIopC5rYV6K3tap4f0OzDh/dwWj2NubZRgL7rXteTAdXkzFnETbPy
++VQNWc9oXvbuJvsNj6hODsQthzTeZ15Nq8nYaLpO4umriWZ/orkekQsZq7u4daFU
+CUTayCNk2VCbe2c45iVXgbUYLbf9m4wkUE00qFDjkZNbO/qd7lT65Wh6YMQJKJGC
+Sw==
+-----END CERTIFICATE-----""")
 
-private_key = """-----BEGIN RSA PRIVATE KEY-----
-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
-+YZvAoIBAHaSD1Q2grLZZePD7SKp/vlX/OaQFNmWekad50t5oq6UBIK1KghiAeCe
-PT7eENP7HSkdZpfvGlnerHYb1p4eT88Vbt/p2GUndvZeekielgxG2y1DFd8KkjRk
-wXznkEBwtvTbFJ5rC0GHyAsIlr1YhOBIQ/zF7LLtbOmkiJPGB88emCVtfyq37M55
-hVBuBhrTTNU7Rvaa8LYOzffY6090jK+5TslgeCEJ/F7qm+JkNZBIKhXY+69mfJXh
-d0QHldnCZE9Gn7+bSp03qGi+zFmOnxeDagHVAZ8/+Hum0o/vsZovKVaWu/8xCfe6
-1jWxzBxfpyCfJ1LHhwehjKTlysLkijsCggEBAOrNm3OThds410kNhGm2gvlEgjWn
-7mnGUFFIcgibrd/E74k+X+abp2nkDCOyP0mBBH3NlobD2dEyLN74Xp1HM4dU1Otc
-rAlPYlah8p5oFUm3127tSO3ITzeyoNj5tEZL1Tcwy/DUuALTTXP7Uf/szw4FyFp2
-E2eP3zYeKUGv1L1AXkrA7OV759aHjrUIXU5Mb7W9XP3YzOtxqvAKTpc9W3s4cMQ3
-5ngHJJx1pz62tcLcr5sOF0btqB+Wh1Z2bKMq6RbSRlLc+zcJoh8UdUJ9jATIMg5G
-JvcGvYcdxQjyTkrldabE/0JcnqYG+bZCDcwrrdGdR9Dj6bEjGl/Xh2NWOTs=
------END RSA PRIVATE KEY-----"""
+private_key = os.environ.get('Casdoor_PrivateKey', """-----BEGIN RSA PRIVATE KEY-----
+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
+-----END RSA PRIVATE KEY-----""")
 
 sdk = CasdoorSDK(
-    endpoint='http://localhost:8000/',
-    client_id='26bb0c442dd7c4bb8dbc',
-    client_secret='770cb3030e11c1a22aa27cf24244c9b060315b81',
-    certificate=public_key,
-    org_name='built-in',
-    application_name='application_vocabularius',
+    endpoint=os.environ.get('Casdoor_Endpoint', 'http://localhost:8000/'),
+    client_id=os.environ.get('Casdoor_ClientId', 'a76a6289a3fa59f742b0'),
+    client_secret=os.environ.get('Casdoor_ClientSecret', '5268177b8038ae2dc816c8c0e7d843d995063db7'),
+    certificate=os.environ.get('Casdoor_Certificate', public_key),
+    org_name=os.environ.get('Casdoor_OrgName', 'built-in'),
+    application_name=os.environ.get('Casdoor_AppName', 'flashwords'),
 )
 
 # Database setup
@@ -190,7 +196,12 @@ class ReviewResult(BaseModel):
 
 def getUserIDFromBearer(req: Request) -> str:
     token = req.headers["Authorization"]
-    user_data = jwt.decode(token.split(" ")[1], public_key, algorithms=["RS256"], options={'verify_signature': False})
+
+    try:
+        user_data = jwt.decode(token.split(" ")[1], public_key, algorithms=["RS256"], options={'verify_signature': False})
+    except Exception as e:
+        print("Error with ", token.split(" "))
+
     return user_data["id"]
 
 
@@ -233,14 +244,6 @@ def get_db():
     finally:
         db.close()
 
-
-# Routes
-@app.post("/auth")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    token = sdk.get_oauth_token("c72f94308551cbee4d6a")
-    user = sdk.parse_jwt_token(token["access_token"])
-
-    return {"accessToken": token["access_token"], "tokenType": "bearer"}
 
 
 @app.post("/users/{user_id}/words/import", status_code=200)
@@ -329,6 +332,9 @@ from transformers import AutoModel, AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 transformer = AutoModel.from_pretrained("bert-base-uncased")
 print('bert is loaded')
+
+
+
 
 
 @app.get("/learning/next/{user_id}")
@@ -425,16 +431,18 @@ def get_next_word(req: Request, user_id: int, db=Depends(get_db)):
     for idx in ranked_indices:
         word = word_map[idx]
         if word.last_reviewed is None:
-            # print(json.dumps(word))
             # word['foreign_word'] = 'kek'
-            return word
+            return randomQuestionFactory(word.id, word.native_word, word.foreign_word, word.description)
 
     for idx in ranked_indices:
         word = word_map[idx]
         if word.last_reviewed.timestamp() < current_time:
-            # print(json.dumps(word))
-            # word['foreign_word'] = 'kek'
-            return word
+            try:
+                print(word.foreign_word)
+                return randomQuestionFactory(word.id, word.native_word, word.foreign_word, word.description)
+            except Exception as e:
+                print(e)
+                return simpleQuestionFactory(word.id, word.native_word, word.foreign_word, word.description) 
 
     raise HTTPException(status_code=204, detail="No suitable words found for review")
 
@@ -598,7 +606,9 @@ def weighted_score(history, forgetting_rate=0.1):
 
 
 @app.get("/stats/progress/{user_id}")
-def get_progress(user_id: str, db=Depends(get_db)):
+def get_progress(req: Request, user_id: str, db=Depends(get_db)):
+    user_id = getUserIDFromBearer(req)
+
     words = db.query(Word).filter(Word.user_id == user_id).all()
     history = tinydb_instance.search(Query().user_id == user_id)
 

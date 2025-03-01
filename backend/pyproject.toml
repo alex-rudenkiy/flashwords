@@ -3,7 +3,6 @@ name = "vocabularius"
 version = "0.1.0"
 description = ""
 authors = ["Alex Rudenkiy <alex-rudenkiy@mail.ru>"]
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -22,11 +21,8 @@ python-jose = "^3.3.0"
 python-multipart = "^0.0.20"
 casdoor = "^1.26.0"
 fastapi-another-jwt-auth = "^0.1.11"
-accelerate = "^1.2.1"
-sentencepiece = "^0.2.0"
-bitsandbytes = "^0.45.0"
-gguf = "^0.14.0"
-llama-cpp-python = "^0.3.6"
+pytest = "^8.3.4"
+requests-mock = "^1.12.1"
 
 
 [build-system]

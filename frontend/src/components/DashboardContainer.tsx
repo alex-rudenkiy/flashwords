@@ -125,7 +125,7 @@ const MetricsDashboard = ({userId: any}) => {
                             fill="#8884d8"
                             label
                         >
-                            {progressData.map((entry, index) => (
+                            {progressData?.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]}/>
                             ))}
                         </Pie>

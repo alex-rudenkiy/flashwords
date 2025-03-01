@@ -104,7 +104,8 @@ export function VocabularyList() {
 
     const handleBatchImport = () => {
         const words = csvData.split('\n').map((line) => {
-            const [foreignWord, nativeWord, description] = line.split(',');
+            const [foreignWord, nativeWord, description] = line.split(';');
+            console.log(line.split(';'));
             return {foreignWord, nativeWord, description};
         });
         batchImportMutation.mutate(words);
@@ -211,7 +212,7 @@ export function VocabularyList() {
                         </Table.Row>
                     </Table.Header>
                     <Table.Body>
-                        {data.map((word) => (<Table.Row key={word.id}>
+                        {data?.map((word) => (<Table.Row key={word.id}>
                                 <Table.Cell>{word['foreign_word']}</Table.Cell>
                                 <Table.Cell>{word['native_word']}</Table.Cell>
                                 <Table.Cell hideBelow="md">{word.description}</Table.Cell>

@@ -28,7 +28,7 @@ const Charts = ({ data, frequency }: {any, any}) => {
           dataKey="value"
           label
         >
-          {pieData.map((entry, index) => (
+          {pieData?.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>

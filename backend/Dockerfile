@@ -1,38 +1,38 @@
 # syntax=docker/dockerfile:1.2
 
 # Stage 1: Builder
-FROM python:3.11-slim AS builder
-ENV POETRY_VERSION 1.5.1
+FROM sunpeek/poetry:py3.11-slim as requirements-stage
 
-# Установка Poetry
-RUN pip install "poetry==$POETRY_VERSION"
+# # Установка Poetry
+# RUN pip install "poetry==$POETRY_VERSION"
 
-# Устанавливаем рабочую директорию
+# # Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем только pyproject.toml и poetry.lock
-COPY pyproject.toml poetry.lock vocab.csv ./
+# # Копируем только pyproject.toml и poetry.lock
+# COPY pyproject.toml poetry.lock vocab.csv ./
 
 
-# Устанавливаем зависимости
-# RUN poetry config virtualenvs.create false && poetry install --no-interaction --no-ansi
-RUN #--mount=type=cache,target=/home/.cache/pypoetry/cache \
-    #--mount=type=cache,target=/home/.cache/pypoetry/artifacts \
-    poetry install --no-interaction --no-ansi
+# (4)
+COPY ./pyproject.toml ./poetry.lock* /app/
 
-# Копируем оставшиеся файлы проекта
-COPY . .
+# (5)
+RUN poetry export -f requirements.txt --output requirements.txt 
 
-# Stage 2: Final image
+# (6)
 FROM python:3.11-slim
 
-# Устанавливаем рабочую директорию
+# (7)
 WORKDIR /app
 
-# Копируем зависимости и исходники из builder stage
-#COPY --from=builder /app/venv /app/venv
-COPY --from=builder /app .
-COPY --from=builder /app/vocab.csv /app/vocab.csv
+# (8)
+COPY --from=requirements-stage /app/requirements.txt /app/requirements.txt
 
-# Указываем точку входа
-CMD ["python", "-m", "uvicorn", "main:app"]
+# (9)
+RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
+
+# (10)
+COPY ./app .
+
+# (11)
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]

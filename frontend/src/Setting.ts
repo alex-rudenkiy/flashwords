@@ -4,13 +4,12 @@ export const ServerUrl = "https://flashwords.ydns.eu";
 
 const sdkConfig = {
   serverUrl: "https://flashwords.ydns.eu",
-  clientId: "26bb0c442dd7c4bb8dbc",
+  clientId: "a76a6289a3fa59f742b0",
   organizationName: "built-in",
   appName: "application_vocabularius",
   redirectPath: "/callback"
   // signinPath: "/api/signin",
 };
-
 export const CasdoorSDK = new Sdk(sdkConfig);
 
 export const isLoggedIn = () => {
